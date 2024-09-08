@@ -1,0 +1,7 @@
+#登录
+{"msgid":1,"name":"bingmeishi","password":"123456"}
+{"msgid":1,"name":"chengCmeishi","password":"123456"}
+#发送聊天消息
+{"msgid":5,"id":23,"from":"bingmeishi","to":24,"msg":"hello!"}
+#添加好友
+{"msgid":6,"id":23,"friendid":24}
