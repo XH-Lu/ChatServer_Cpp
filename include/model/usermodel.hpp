@@ -11,6 +11,7 @@ private:
 public:
     bool insert(User& user);
     User query(string name);
+    User query(int id);
     bool update(User user);
     void resetState();
 

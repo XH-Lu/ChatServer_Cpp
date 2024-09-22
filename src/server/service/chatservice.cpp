@@ -17,7 +17,10 @@ ChatService::ChatService()
     _msgHandlerMap.insert({JOIN_GROUP_MSG, std::bind(&ChatService::joinGroup, this, _1, _2, _3)});
     _msgHandlerMap.insert({GROUP_CHAT_MSG, std::bind(&ChatService::groupChat, this, _1, _2, _3)});
 
-
+    if(_redis.connect())
+    {
+        _redis.initNotifyHandler(bind(&ChatService::handleRedisSubscribMessage, this, _1, _2));
+    }
 }
 
 ChatService* ChatService::instance()
@@ -99,6 +102,9 @@ void ChatService::login(const TcpConnectionPtr& conn, json& js, Timestamp time)
                 lock_guard<mutex> lock(_connMutex);
                 _userConnMap.insert({id, conn});
             }
+
+            //登录成功后，服务器向redis订阅id通道的消息
+            _redis.subscribe(id);
 
             //返回用户信息
             user.setState("online");
@@ -185,6 +191,8 @@ void ChatService::logout(const TcpConnectionPtr& conn, json& js, Timestamp time)
         }
     }
 
+    _redis.unsubscribe(userid);
+
     User user(userid, "", "", "offline");
     _userModel.update(user);
 }
@@ -204,6 +212,9 @@ void ChatService::clientCloseException(const TcpConnectionPtr& conn)
             }
         }
     }
+
+    _redis.unsubscribe(user.getId());
+
     if(user.getId() != -1)
     {
         user.setState("offline");
@@ -223,11 +234,20 @@ void ChatService::oneChat(const TcpConnectionPtr& conn, json& js, Timestamp time
     {
         lock_guard<mutex> lock(_connMutex);
         auto it = _userConnMap.find(toid);
+        //如果用户在本服务器的_userConnMap上说明两个人属于同一台服务器
         if(it != _userConnMap.end())
         {
             it->second->send(js.dump());
             return;
         }
+    }
+
+    //如果用户不在当前服务器，通过表查询用户是否在线，如果在线说明他在其他服务器，通过redis推送消息实现聊天
+    User user = _userModel.query(toid);
+    if(user.getState() == "online")
+    {
+        _redis.publish(toid, js.dump());
+        return;
     }
 
     _offlineMsgModel.insert(toid, js.dump());
@@ -286,12 +306,32 @@ void ChatService::groupChat(const TcpConnectionPtr& conn, json& js, Timestamp ti
             }
             else
             {
-                _offlineMsgModel.insert(id, js.dump());
+                User user = _userModel.query(id);
+                if(user.getState() == "online")
+                {
+                    _redis.publish(id, js.dump());
+                }
+                else
+                {
+                    _offlineMsgModel.insert(id, js.dump());
+                }
             }
         }
     }
 }
 
+void ChatService::handleRedisSubscribMessage(int userid, string msg)
+{
+    lock_guard<mutex> lock(_connMutex);
+    auto it = _userConnMap.find(userid);
+    if(it != _userConnMap.end())
+    {
+        it->second->send(msg);
+        return;
+    }
+
+    _offlineMsgModel.insert(userid, msg);
+}
 
  
 

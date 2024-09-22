@@ -50,6 +50,33 @@ User UserModel::query(string name)
     return User();
 }
 
+User UserModel::query(int id)
+{
+    char sql[1024] = {0};
+    sprintf(sql, "select * from user where id = '%d'", id);
+    MySQL mysql;
+    if(mysql.connect())
+    {
+        MYSQL_RES* res = mysql.query(sql);
+        if(res != nullptr)
+        {
+            MYSQL_ROW row = mysql_fetch_row(res);
+            if(row != nullptr)
+            {
+                User user;
+                user.setId(atoi(row[0]));
+                user.setName(row[1]);
+                user.setPwd(row[2]);
+                user.setState(row[3]);
+                mysql_free_result(res);
+                return user;
+            }
+        }
+        
+    }
+    return User();
+}
+
 
 bool UserModel::update(User user)
 {

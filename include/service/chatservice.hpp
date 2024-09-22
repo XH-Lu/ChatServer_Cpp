@@ -11,6 +11,7 @@
 #include "offlinemsgmodel.hpp"
 #include "friendmodel.hpp"
 #include "groupmodel.hpp"
+#include "redis.hpp"
 
 using namespace muduo;
 using namespace muduo::net;
@@ -38,6 +39,8 @@ private:
 
     std::mutex _connMutex;
 
+    Redis _redis;
+
 public:
     static ChatService* instance();
 
@@ -62,6 +65,8 @@ public:
     void joinGroup(const TcpConnectionPtr& conn, json& js, Timestamp time);
     
     void groupChat(const TcpConnectionPtr& conn, json& js, Timestamp time);
+
+    void handleRedisSubscribMessage(int userid, string msg);
 
 
 };
