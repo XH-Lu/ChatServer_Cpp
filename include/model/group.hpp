@@ -5,6 +5,7 @@
 #include "groupuser.hpp"
 using namespace std;
 
+// 群聊类
 class Group
 {
 private:
@@ -13,10 +14,8 @@ private:
     string desc;
     vector<GroupUser> users;
 
-
 public:
-    Group():id(-1), name(""), desc("")
-    {};
+    Group() : id(-1), name(""), desc("") {};
 
     void setId(int id)
     {
@@ -48,14 +47,10 @@ public:
         return desc;
     }
 
-    vector<GroupUser>& getUsers()
+    vector<GroupUser> &getUsers()
     {
         return this->users;
     }
-
 };
-
-
-
 
 #endif

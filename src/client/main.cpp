@@ -17,20 +17,29 @@
 
 using namespace std;
 using json = nlohmann::json;
+/***************************
+客户端代码
+主要任务：显示主菜单、用户信息、聊天消息，向服务端发送响应json数据
+***************************/
 
 // 全局变量
+// 当前用户
 User _clientUser;
+// 用户好友列表
 vector<User> _clientFriends;
+// 用户群聊列表
 vector<Group> _clientGroups;
+// 登陆标志位
 bool isLogin = false;
 
 // 函数声明
+// 显示用户数据
 void showCurrentUserInfo();
-
+// 接收聊天消息
 void readTaskHandler(int clientfd);
-
+// 获取当前时间
 string getCurrentTime();
-
+// 显示主菜单
 void mainMenu(int clientfd);
 
 int main(int argc, char **argv)
@@ -63,7 +72,7 @@ int main(int argc, char **argv)
         exit(-1);
     }
 
-    for(;;)
+    for (;;)
     {
         cout << "=============================" << endl;
         cout << "1.登录" << endl;
@@ -79,6 +88,7 @@ int main(int argc, char **argv)
         {
         case 1:
         {
+            // 登录
             char name[50] = {0};
             char pwd[50] = {0};
             cout << "请输入用户名：";
@@ -118,7 +128,7 @@ int main(int argc, char **argv)
                         _clientUser.setId(responsejs["id"].get<int>());
                         _clientUser.setName(responsejs["name"]);
                         isLogin = true;
-
+                        // 保存好友信息
                         if (responsejs.contains("friends"))
                         {
                             _clientFriends.clear();
@@ -133,7 +143,7 @@ int main(int argc, char **argv)
                                 _clientFriends.push_back(user);
                             }
                         }
-
+                        // 保存群聊信息
                         if (responsejs.contains("groups"))
                         {
                             _clientGroups.clear();
@@ -159,7 +169,9 @@ int main(int argc, char **argv)
                                 _clientGroups.push_back(group);
                             }
                         }
+                        // 显示用户信息
                         showCurrentUserInfo();
+                        // 显示离线消息
                         if (responsejs.contains("offlinemsg"))
                         {
                             cout << "--------------------离线消息--------------------" << endl;
@@ -173,19 +185,20 @@ int main(int argc, char **argv)
                                 }
                                 else
                                 {
-                                    cout << js["time"].get<string>() << " [" << js["groupid"] << "]" << js["groupname"].get<string>() <<"-->"<< " [" << js["id"] << "]" << js["name"].get<string>() << " said: " << js["msg"].get<string>() << endl;
+                                    cout << js["time"].get<string>() << " [" << js["groupid"] << "]" << js["groupname"].get<string>() << "-->" << " [" << js["id"] << "]" << js["name"].get<string>() << " said: " << js["msg"].get<string>() << endl;
                                 }
                             }
                         }
                         static int readThreadNum = 0;
-                        if(readThreadNum == 0)
+                        if (readThreadNum == 0)
                         {
+                            // 创建子线程，接受聊天消息
                             std::thread readTask(readTaskHandler, clientfd);
                             readTask.detach();
                             readThreadNum++;
                         }
 
-
+                        // 显示操作菜单
                         mainMenu(clientfd);
                     }
                 }
@@ -194,6 +207,7 @@ int main(int argc, char **argv)
         }
         case 2:
         {
+            // 注册
             char name[50] = {0};
             char pwd[50] = {0};
             cout << "请输入用户名：" << endl;
@@ -237,6 +251,7 @@ int main(int argc, char **argv)
         }
         case 3:
         {
+            // 退出
             close(clientfd);
             exit(0);
         }
@@ -341,7 +356,7 @@ void mainMenu(int clientfd)
     help(0, "");
 
     char buffer[1024] = {0};
-    while(isLogin)
+    while (isLogin)
     {
         cin.getline(buffer, 1024);
         string commandbuf(buffer);
@@ -497,14 +512,12 @@ void logout(int clientfd, string str)
     string buffer = js.dump();
 
     int len = send(clientfd, buffer.c_str(), strlen(buffer.c_str()) + 1, 0);
-    if(-1 == len)
+    if (-1 == len)
     {
-        cerr << "send logout msg error ->" << buffer <<endl;
+        cerr << "send logout msg error ->" << buffer << endl;
     }
     else
     {
         isLogin = false;
     }
-
-
 }

@@ -4,6 +4,7 @@
 
 using namespace std;
 
+// 用户类
 class User
 {
 private:
@@ -13,9 +14,10 @@ private:
     string _state;
 
 public:
-    User(int id=-1, string name = "", string pwd="", string state="offline")
-    :_id(id), _name(name),_password(pwd),_state(state)
-    {}
+    User(int id = -1, string name = "", string pwd = "", string state = "offline")
+        : _id(id), _name(name), _password(pwd), _state(state)
+    {
+    }
 
     void setId(int id)
     {
@@ -56,9 +58,6 @@ public:
     {
         return _state;
     }
-
 };
 
-
-
-#endif 
+#endif

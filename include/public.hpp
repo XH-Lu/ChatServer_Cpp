@@ -1,7 +1,6 @@
 #ifndef PUBLIC_H
 #define PUBLIC_H
 
-
 enum EnMsgType
 {
     LOGIN_MSG = 1,
@@ -21,11 +20,8 @@ enum EnMsgType
 
     JOIN_GROUP_MSG,
     JOIN_GROUP_ACK,
-    
+
     GROUP_CHAT_MSG
 };
-
-
-
 
 #endif
